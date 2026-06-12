@@ -45,4 +45,4 @@ const fs = require('fs');
   }
 })();
 EOF
-ENTRYPOINT ["node", "init.js"]
+ENTRYPOINT ["node", "init.js"] 
