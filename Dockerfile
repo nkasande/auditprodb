@@ -18,7 +18,11 @@ const fs = require('fs');
     });
 
     await adminClient.connect();
-    await adminClient.query('CREATE DATABASE IF NOT EXISTS manufacturing');
+    try {
+      await adminClient.query('CREATE DATABASE manufacturing');
+    } catch (err) {
+      if (err.code !== '42P04') throw err; // 42P04 = database already exists
+    }
     await adminClient.end();
 
     // Now connect to manufacturing database
@@ -45,4 +49,4 @@ const fs = require('fs');
   }
 })();
 EOF
-ENTRYPOINT ["node", "init.js"] 
+ENTRYPOINT ["node", "init.js"]
