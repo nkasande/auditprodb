@@ -20,8 +20,13 @@ const fs = require('fs');
     await adminClient.connect();
     try {
       await adminClient.query('CREATE DATABASE manufacturing');
+      console.log('Database manufacturing created.');
     } catch (err) {
-      if (err.code !== '42P04') throw err; // 42P04 = database already exists
+      if (err.code === '42P04') {
+        console.log('Database manufacturing already exists.');
+      } else {
+        throw err;
+      }
     }
     await adminClient.end();
 
