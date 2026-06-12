@@ -1,7 +1,40 @@
-FROM postgres:latest
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY . .
 
-ENTRYPOINT ["sh", "-c", "for f in $(ls -1 *.sql | sort); do psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -f $f || exit 1; done"]
+RUN npm install pg
+
+COPY <<EOF init.js
+const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+const client = new Client({
+  host: process.env.PGHOST,
+  port: process.env.PGPORT,
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+});
+
+(async () => {
+  try {
+    await client.connect();
+    const files = fs.readdirSync('.').filter(f => f.endsWith('.sql')).sort();
+    for (const file of files) {
+      console.log(`Running ${file}...`);
+      const sql = fs.readFileSync(file, 'utf8');
+      await client.query(sql);
+    }
+    console.log('All scripts executed successfully!');
+    await client.end();
+  } catch (err) {
+    console.error('Error:', err);
+    process.exit(1);
+  }
+})();
+EOF
+
+ENTRYPOINT ["node", "init.js"]
